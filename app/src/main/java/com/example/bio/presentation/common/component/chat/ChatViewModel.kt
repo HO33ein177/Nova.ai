@@ -112,16 +112,44 @@ class ChatViewModel @Inject constructor(
 
             try {
                 val request = ChatRequest(query = userInput, userId = userId)
-                val response = apiService.sendTextMessage(request)
+                val functionCallingResponse = apiService.functionCalling(request)
 
-                if (response.isSuccessful && response.body() != null) {
-                    val responseText = response.body()!!.answer
-                    val aiDbMessage = Message(userId = userId, conversationId = conversationId, sender = SENDER_AI, content = responseText, timestamp = System.currentTimeMillis())
-                    withContext(Dispatchers.IO) {
-                        messageDao.insert(aiDbMessage)
+                if (functionCallingResponse.isSuccessful && functionCallingResponse.body() != null) {
+                    val functionName = functionCallingResponse.body()!!.functionName
+                    if (functionName != "none") {
+                        // TODO: Implement the actual function execution
+                        val functionResponse = "Function '${functionName}' was recognized and would be executed here."
+                        val aiDbMessage = Message(
+                            userId = userId,
+                            conversationId = conversationId,
+                            sender = SENDER_AI,
+                            content = functionResponse,
+                            timestamp = System.currentTimeMillis()
+                        )
+                        withContext(Dispatchers.IO) {
+                            messageDao.insert(aiDbMessage)
+                        }
+                    } else {
+                        val response = apiService.sendTextMessage(request)
+                        if (response.isSuccessful && response.body() != null) {
+                            val responseText = response.body()!!.answer
+                            val aiDbMessage = Message(
+                                userId = userId,
+                                conversationId = conversationId,
+                                sender = SENDER_AI,
+                                content = responseText,
+                                timestamp = System.currentTimeMillis()
+                            )
+                            withContext(Dispatchers.IO) {
+                                messageDao.insert(aiDbMessage)
+                            }
+                        } else {
+                            val errorMsg = "API Error: ${response.code()} - ${response.message()}"
+                            handleError(errorMsg, null)
+                        }
                     }
                 } else {
-                    val errorMsg = "API Error: ${response.code()} - ${response.message()}"
+                    val errorMsg = "API Error: ${functionCallingResponse.code()} - ${functionCallingResponse.message()}"
                     handleError(errorMsg, null)
                 }
             } catch (e: Exception) {
