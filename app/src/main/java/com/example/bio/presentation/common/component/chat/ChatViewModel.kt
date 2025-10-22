@@ -38,6 +38,11 @@ class ChatViewModel @Inject constructor(
     private val apiService: ApiService
 ) : ViewModel() {
 
+    private val webhookUrls = mapOf(
+        "get_weather" to "https://n8n.example.com/webhook/weather"
+        // Add other function names and their corresponding webhook URLs here
+    )
+
     private val _chatHistory = MutableStateFlow<List<ChatMessage>>(emptyList())
     val chatHistory: StateFlow<List<ChatMessage>> = _chatHistory.asStateFlow()
 
@@ -112,16 +117,71 @@ class ChatViewModel @Inject constructor(
 
             try {
                 val request = ChatRequest(query = userInput, userId = userId)
-                val response = apiService.sendTextMessage(request)
+                val functionCallingResponse = apiService.functionCalling(request)
 
-                if (response.isSuccessful && response.body() != null) {
-                    val responseText = response.body()!!.answer
-                    val aiDbMessage = Message(userId = userId, conversationId = conversationId, sender = SENDER_AI, content = responseText, timestamp = System.currentTimeMillis())
-                    withContext(Dispatchers.IO) {
-                        messageDao.insert(aiDbMessage)
+                if (functionCallingResponse.isSuccessful && functionCallingResponse.body() != null) {
+                    val functionName = functionCallingResponse.body()!!.functionName
+                    val parameters = functionCallingResponse.body()!!.parameters
+                    if (functionName != "none") {
+                        val confirmationMessage = "Processing your request to '(${functionName})'..."
+                        val confirmationDbMessage = Message(
+                            userId = userId,
+                            conversationId = conversationId,
+                            sender = SENDER_AI,
+                            content = confirmationMessage,
+                            timestamp = System.currentTimeMillis()
+                        )
+                        withContext(Dispatchers.IO) {
+                            messageDao.insert(confirmationDbMessage)
+                        }
+
+                        val webhookUrl = webhookUrls[functionName]
+                        if (webhookUrl != null) {
+                            try {
+                                val webhookResponse = apiService.triggerWebhook(webhookUrl, parameters)
+                                if (webhookResponse.isSuccessful && webhookResponse.body() != null) {
+                                    val resultMessage = webhookResponse.body()!!.message
+                                    val resultDbMessage = Message(
+                                        userId = userId,
+                                        conversationId = conversationId,
+                                        sender = SENDER_AI,
+                                        content = resultMessage,
+                                        timestamp = System.currentTimeMillis()
+                                    )
+                                    withContext(Dispatchers.IO) {
+                                        messageDao.insert(resultDbMessage)
+                                    }
+                                } else {
+                                    val errorMsg = "API Error: ${webhookResponse.code()} - ${webhookResponse.message()}"
+                                    handleError(errorMsg, null)
+                                }
+                            } catch (e: Exception) {
+                                handleError("Network Error: ${e.localizedMessage}", e)
+                            }
+                        } else {
+                            handleError("Error: Webhook URL for function '${functionName}' not found.", null)
+                        }
+                    } else {
+                        val response = apiService.sendTextMessage(request)
+                        if (response.isSuccessful && response.body() != null) {
+                            val responseText = response.body()!!.answer
+                            val aiDbMessage = Message(
+                                userId = userId,
+                                conversationId = conversationId,
+                                sender = SENDER_AI,
+                                content = responseText,
+                                timestamp = System.currentTimeMillis()
+                            )
+                            withContext(Dispatchers.IO) {
+                                messageDao.insert(aiDbMessage)
+                            }
+                        } else {
+                            val errorMsg = "API Error: ${response.code()} - ${response.message()}"
+                            handleError(errorMsg, null)
+                        }
                     }
                 } else {
-                    val errorMsg = "API Error: ${response.code()} - ${response.message()}"
+                    val errorMsg = "API Error: ${functionCallingResponse.code()} - ${functionCallingResponse.message()}"
                     handleError(errorMsg, null)
                 }
             } catch (e: Exception) {

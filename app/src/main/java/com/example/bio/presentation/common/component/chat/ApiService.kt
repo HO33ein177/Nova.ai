@@ -9,6 +9,7 @@ import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Url
 
 interface ApiService {
 
@@ -32,4 +33,10 @@ interface ApiService {
     // ✅ تابع جدید برای ارزیابی دسته‌ای آزمون
     @POST("evaluate/answer")
     suspend fun evaluateQuiz(@Body request: EvaluateQuizRequest): Response<EvaluateQuizResponse>
+
+    @POST("functional_calling")
+    suspend fun functionCalling(@Body request: ChatRequest): Response<FunctionCallingResponse>
+
+    @POST
+    suspend fun triggerWebhook(@Url url: String, @Body params: Map<String, Any>): Response<WebhookResponse>
 }
