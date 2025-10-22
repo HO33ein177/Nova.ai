@@ -32,4 +32,7 @@ interface ApiService {
     // ✅ تابع جدید برای ارزیابی دسته‌ای آزمون
     @POST("evaluate/answer")
     suspend fun evaluateQuiz(@Body request: EvaluateQuizRequest): Response<EvaluateQuizResponse>
+
+    @POST("functional_calling")
+    suspend fun functionCalling(@Body request: ChatRequest): Response<FunctionCallingResponse>
 }
