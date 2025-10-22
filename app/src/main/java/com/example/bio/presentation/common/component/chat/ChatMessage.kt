@@ -9,6 +9,7 @@ enum class MessageType {
 
 // data class
 data class ChatMessage(
+    val id: Long,
     val text: String,
     val isFromUser: Boolean,
     val isError: Boolean = false,

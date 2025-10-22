@@ -77,6 +77,7 @@ class ChatViewModel @Inject constructor(
                 .collect { dbMessages ->
                     val uiMessages = dbMessages.map { dbMsg ->
                         ChatMessage(
+                            id = dbMsg.id.toLong(),
                             text = dbMsg.content,
                             isFromUser = dbMsg.sender == SENDER_USER,
                             isError = false,
@@ -90,6 +91,22 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+
+    fun deleteMessage(messageId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // شما باید متد deleteMessageById را به MessageDao خود اضافه کنید
+                // مثال در MessageDao:
+                // @Query("DELETE FROM messages WHERE id = :id")
+                // suspend fun deleteMessageById(id: Long)
+
+                messageDao.deleteMessageById(messageId)
+            } catch (e: Exception) {
+                Log.e(TAG, "[deleteMessage] Failed to delete message $messageId", e)
+            }
+        }
+    }
+
     fun sendMessage(userInput: String) {
         val userId = currentUserId ?: return
         val conversationId = currentConversationId ?: return
@@ -97,7 +114,7 @@ class ChatViewModel @Inject constructor(
         if (userInput.isBlank() || _isLoading.value || _isRecording.value) return
 
         _isLoading.value = true
-        val userChatMessage = ChatMessage(text = userInput, isFromUser = true)
+        val userChatMessage = ChatMessage(id = 0 , text = userInput, isFromUser = true)
         _chatHistory.update { it + userChatMessage }
 
         viewModelScope.launch {
@@ -262,6 +279,7 @@ class ChatViewModel @Inject constructor(
     private fun handleError(message: String, exception: Exception?) {
         Log.e(TAG, "handleError called: $message", exception)
         val errorChatMessage = ChatMessage(
+            id = System.currentTimeMillis(),
             text = "Error: ${message.substringBefore('\n').substringBefore(':')}",
             isFromUser = false,
             isError = true,

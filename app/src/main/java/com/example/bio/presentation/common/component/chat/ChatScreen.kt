@@ -103,6 +103,13 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 
 
 // Data class for representing a conversation summary in the history list
@@ -268,8 +275,13 @@ fun ChatScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
-                    items(chatHistory) { message ->
-                        ChatBubble(message = message)
+                    items(chatHistory, key = { it.id }) { message ->
+                        ChatBubble(
+                            message = message,
+                            onDelete = {
+                                chatViewModel.deleteMessage(message.id)
+                            }
+                        )
                     }
 
                     if (isLoading && chatHistory.isEmpty()) {
@@ -487,7 +499,16 @@ fun InitialPrompts(onPromptClick: (String) -> Unit) {
 
 
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun ChatBubble(
+    message: ChatMessage,
+    onDelete: () -> Unit // پارامتر جدید برای حذف
+) {
+    // --- state ها برای منو و کلیپ بورد ---
+    var menuExpanded by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    // ---
+
     val bubbleColor = if (message.isFromUser) MaterialTheme.colorScheme.primaryContainer
     else if (message.isError) MaterialTheme.colorScheme.errorContainer
     else MaterialTheme.colorScheme.secondaryContainer
@@ -497,43 +518,159 @@ fun ChatBubble(message: ChatMessage) {
     else MaterialTheme.colorScheme.onSecondaryContainer
 
     val alignment = if (message.isFromUser) Alignment.CenterEnd else Alignment.CenterStart
-    val isRtl = message.text.any { it in '\u0600'..'\u06FF' }
-    val textAlignment = if (isRtl) TextAlign.Right else TextAlign.Left
-    val layoutDirection = if (isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr
 
-
-    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-        Box(
-            modifier = Modifier.fillMaxWidth()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = if (message.isFromUser) 40.dp else 0.dp,
+                end = if (message.isFromUser) 0.dp else 40.dp
+            )
+    ) {
+        Row(
+            modifier = Modifier.align(alignment), // کل Row را به چپ یا راست می‌چسباند
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = RoundedCornerShape(
-                    topStart = if (message.isFromUser) 16.dp else 4.dp,
-                    topEnd = if (message.isFromUser) 4.dp else 16.dp,
-                    bottomStart = 16.dp,
-                    bottomEnd = 16.dp
-                ),
-                color = bubbleColor,
-                modifier = Modifier
-                    .align(alignment)
-                    .padding(
-                        start = if (message.isFromUser) 40.dp else 0.dp,
-                        end = if (message.isFromUser) 0.dp else 40.dp
+
+            if (message.isFromUser && !message.isError) {
+                MessageMenuIcon(
+                    expanded = menuExpanded,
+                    onExpand = { menuExpanded = true },
+                    onDismiss = { menuExpanded = false },
+                    onCopy = {
+                        clipboardManager.setText(AnnotatedString(message.text))
+                        Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
+                        menuExpanded = false
+                    },
+                    onDelete = {
+                        onDelete()
+                        menuExpanded = false
+                    }
+                )
+            }
+
+            // --- حباب پیام (بدون تغییر) ---
+            val isRtl = message.text.any { it in '\u0600'..'\u06FF' }
+            val textAlignment = if (isRtl) TextAlign.Right else TextAlign.Left
+            val layoutDirection = if (isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr
+
+            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                Surface(
+                    shape = RoundedCornerShape(
+                        topStart = if (message.isFromUser) 16.dp else 4.dp,
+                        topEnd = if (message.isFromUser) 4.dp else 16.dp,
+                        bottomStart = 16.dp,
+                        bottomEnd = 16.dp
+                    ),
+                    color = bubbleColor,
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .widthIn(min = 60.dp)
+                ) {
+                    Text(
+                        text = message.text,
+                        color = textColor,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        textAlign = textAlignment
                     )
-                    .wrapContentWidth()
-                    .widthIn(min = 60.dp)
+                }
+            } // --- پایان حباب پیام --
+            if (!message.isFromUser && !message.isError) {
+                MessageMenuIcon(
+                    expanded = menuExpanded,
+                    onExpand = { menuExpanded = true },
+                    onDismiss = { menuExpanded = false },
+                    onCopy = {
+                        clipboardManager.setText(AnnotatedString(message.text))
+                        Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
+                        menuExpanded = false
+                    },
+                    onDelete = {
+                        onDelete()
+                        menuExpanded = false
+                    }
+                )
+            }
+        } // End Row
+    } // End Box
+}
+
+
+/**
+ * کامپوزبل کمکی برای نمایش آیکون سه نقطه و منوی کشویی
+ */
+@Composable
+fun MessageMenuIcon(
+    expanded: Boolean,
+    onExpand: () -> Unit,
+    onDismiss: () -> Unit,
+    onCopy: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Box {
+        IconButton(onClick = onExpand, modifier = Modifier.size(32.dp).padding(4.dp)) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "Message options",
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // اطمینان از چینش RTL برای متن فارسی
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismiss
             ) {
-                Text(
-                    text = message.text,
-                    color = textColor,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    textAlign = textAlignment
+
+                // ✅ آیتم "کپی"
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // ✅ آیکون ابتدا می‌آید (تا در سمت راست قرار گیرد)
+                            Icon(
+                                Icons.Default.ContentCopy,
+                                "کپی",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.width(8.dp)) // فاصله
+                            // ✅ متن دوم می‌آید (تا در سمت چپ قرار گیرد)
+                            Text(
+                                "کپی",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    },
+                    onClick = onCopy,
+                    
+                )
+
+                // ✅ آیتم "حذف"
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // ✅ آیکون ابتدا می‌آید (تا در سمت راست قرار گیرد)
+                            Icon(
+                                Icons.Default.Delete,
+                                "حذف",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(Modifier.width(8.dp)) // فاصله
+                            // ✅ متن دوم می‌آید (تا در سمت چپ قرار گیرد)
+                            Text(
+                                "حذف",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
+                    onClick = onDelete,
+
                 )
             }
         }
     }
 }
-
 
 @Composable
 fun HistoryPage(
