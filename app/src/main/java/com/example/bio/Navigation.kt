@@ -12,7 +12,7 @@ object AppDestinations {
     const val LOGIN_ROUTE = "login"
     const val SIGNUP_ROUTE = "signup"
     const val FORGET_PASSWORD_ROUTE = "forget_Password"
-
+    const val SUBSCRIPTION_ROUTE = "subscription"
     // Conversation List Route
     const val CONVERSATION_LIST_ROUTE_BASE = "conversationList"
     const val CONVERSATION_LIST_ROUTE = "$CONVERSATION_LIST_ROUTE_BASE/{${NavArguments.USER_ID}}"
