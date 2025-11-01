@@ -28,7 +28,6 @@ import com.example.bio.presentation.common.component.quiz.PdfListScreen
 import com.example.bio.presentation.common.component.quiz.QuizScreen
 import com.example.bio.presentation.common.component.splash.SplashScreen
 import com.example.bio.presentation.common.component.theme.BioTheme
-import com.example.bio.presentation.common.component.chat.SubscriptionScreen
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.UUID
 
@@ -63,11 +62,6 @@ fun AppNavigation() {
         // Splash Screen
         composable(route = AppDestinations.SPLASH_ROUTE) {
             SplashScreen(navController = navController)
-        }
-
-        composable(AppDestinations.SUBSCRIPTION_ROUTE) {
-            // این صفحه‌ای است که در مرحله بعد خواهیم ساخت
-            SubscriptionScreen(navController = navController)
         }
 
         // Onboarding Screen

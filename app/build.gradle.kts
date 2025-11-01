@@ -75,8 +75,6 @@ dependencies {
     implementation (libs.accompanist.permissions)
     implementation(libs.common)
     implementation(libs.androidx.navigation.runtime.android)
-    implementation(libs.androidx.compose.material)
-    implementation(libs.androidx.runtime.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

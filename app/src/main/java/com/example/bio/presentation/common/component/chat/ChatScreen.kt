@@ -110,8 +110,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.material.icons.filled.WorkspacePremium
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 
 // Data class for representing a conversation summary in the history list
@@ -215,13 +213,12 @@ fun ChatScreen(
                             )
                         }
                         IconButton(onClick = {
-                            // به مسیر جدیدی که در مرحله بعد تعریف می‌کنیم، ناوبری می‌کند
-                            navController.navigate(AppDestinations.SUBSCRIPTION_ROUTE)
+                            // فعلا نام یک فایل PDF را به صورت ثابت ارسال می‌کنیم
+                            // در آینده می‌توانید به کاربر اجازه انتخاب دهید
+                            val pdfForQuiz = "نام_فایل_پی‌دی‌اف_شما.pdf"
+                            navController.navigate(AppDestinations.QUIZ_ENTRY_ROUTE)
                         }) {
-                            Icon(
-                                imageVector = Icons.Filled.WorkspacePremium,
-                                contentDescription = "خرید اشتراک"
-                            )
+                            Icon(painterResource(id = R.drawable.ic_quiz), contentDescription = "Take a Quiz") // یک آیکون آزمون اضافه کنید
                         }
                     },
 
