@@ -15,6 +15,8 @@ interface MessageDao {
     @Query("SELECT * FROM messages WHERE user_id = :userId AND conversation_id = :conversationId ORDER BY timestamp ASC")
     fun getMessagesForConversation(userId: Int, conversationId: String): Flow<List<Message>>
 
+    @Query("DELETE FROM messages WHERE id = :messageId")
+    suspend fun deleteMessageById(messageId: Long)
 
     @Query("SELECT DISTINCT conversation_id FROM messages WHERE user_id = :userId ORDER BY timestamp DESC")
     fun getAllConversationIds(userId: Int): Flow<List<String>>
