@@ -1,94 +1,130 @@
 package com.example.bio.presentation.common.component.onboarding
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.bio.AppDestinations
 import com.example.bio.R
 
 @Composable
 fun OnboardingScreen(navController: NavController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Spacer(modifier = Modifier.height(60.dp))
 
-            Text(
-                text = "دستیار هوشمند شما",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFF3F51B5)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+    // رنگ‌های تم
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val orangeColor = colorResource(R.color.pro_orange)
+    val backgroundColor = colorResource(R.color.pro_white_smoke)
+    val greyText = colorResource(R.color.pro_grey_text)
 
-            Text(
-                text = "با استفاده از این برنامه شما \n" +
-                        "می\u200Cتوانید سوالات خود را به صورت صوت یا متن بپرسید " +
-                        "و پاسخ متنی دریافت کنید",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-
-
-            Image(
-                painter = painterResource(id = R.drawable.onboarding_illustration),
-
-                contentDescription = "Onboarding Illustration",
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .aspectRatio(1f),
-                contentScale = ContentScale.Fit,
-
-            )
-        }
-
-
-        Button(
-            onClick = {
-                // Navigate to chat and remove onboarding from back stack
-                navController.navigate(AppDestinations.LOGIN_ROUTE) {
-                    popUpTo(AppDestinations.ONBOARDING_ROUTE) { inclusive = true }
-                    launchSingleTop = true
-                }
-
-            },
+    Scaffold(
+        containerColor = backgroundColor
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5))
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween // فاصله بین بالا و پایین
         ) {
-            Text("ادامه", modifier = Modifier.padding(vertical = 8.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.Filled.ArrowForward, contentDescription = "ادامه")
+
+            // بخش بالای صفحه (عکس و متن)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f), // پر کردن فضای بالا
+                verticalArrangement = Arrangement.Center
+            ) {
+                // ✅✅✅ تغییرات جدید اینجاست:
+
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "Logo",
+                    modifier = Modifier
+                        .size(180.dp) // سایز بزرگ و مناسب برای وسط صفحه
+                        .padding(bottom = 18.dp),
+                    contentScale = ContentScale.Fit
+                )
+
+                Text(
+                    text = "Nova AI",
+                    style = MaterialTheme.typography.displayMedium.copy( // فونت درشت و خوانا
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 48.sp
+                    ),
+                    color = navyColor, // رنگ سرمه‌ای تم
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(64.dp))
+
+                Text(
+                    text = "دستیار هوشمند شما",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = navyColor,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // بقیه متن‌ها (توضیحات) در ادامه می‌آیند...
+                Text(
+                    text = "با استفاده از این برنامه می‌توانید\nسوالات خود را به صورت صوت یا متن بپرسید\nو پاسخ هوشمند دریافت کنید.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = greyText,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 28.sp
+                )
+            }
+
+            // بخش پایین (دکمه)
+            Button(
+                onClick = {
+                    navController.navigate(AppDestinations.LOGIN_ROUTE) {
+                        popUpTo(AppDestinations.ONBOARDING_ROUTE) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp), // دکمه بزرگ و راحت
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = orangeColor, // دکمه اکشن نارنجی
+                    contentColor = Color.White
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 2.dp
+                )
+            ) {
+                Text(
+                    text = "شروع کنید",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Next"
+                )
+            }
         }
     }
 }

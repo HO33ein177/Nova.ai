@@ -31,7 +31,7 @@ fun RoundedButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     elevation: Dp = 0.dp,
-    backGroundColor: Color = MaterialTheme.customColors.lightBlue,
+    backGroundColor: Color = MaterialTheme.colorScheme.secondary,
     contentColor: Color = Color.White
 ) {
     Button(
@@ -68,7 +68,7 @@ fun RoundedToggleButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    activeColor: Color = MaterialTheme.customColors.lightBlue,
+    activeColor: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = MaterialTheme.colorScheme.surfaceVariant,
 ) {
     val currentContentColor = if (state) {

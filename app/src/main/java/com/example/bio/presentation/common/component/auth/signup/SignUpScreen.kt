@@ -3,37 +3,20 @@ package com.example.bio.presentation.common.component.auth.signup
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -47,7 +30,6 @@ import com.example.bio.R
 import com.example.bio.data.local.dao.UserDao
 import com.example.bio.data.local.entity.User
 import com.example.bio.presentation.common.component.reusable.MyBasicTextField
-import com.example.bio.presentation.common.component.reusable.RoundedButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
@@ -56,12 +38,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
-// Signup states
 sealed interface SignupResult {
     data object Idle : SignupResult
     data object Loading : SignupResult
-    // Pass the local DB user ID on success
     data class Success(val userId: Long) : SignupResult
     data class Error(val message: String) : SignupResult
 }
@@ -72,152 +53,108 @@ private const val TAG = "SignupScreen"
 @Composable
 fun SignupScreen(
     navController: NavController,
-    // Callback to notify MainActivity/AppNavigation about success
-    // Pass the local database user ID (Long) after successful creation
     onSignupSuccess: (Long) -> Unit
 ) {
-    // --- State Management ---
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var signupStatus by remember { mutableStateOf<SignupResult>(SignupResult.Idle) }
     val isLoading = signupStatus is SignupResult.Loading
-
-    //  Coroutine Scope & Context
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    //  Get Dependencies (FirebaseAuth and UserDao)
-    // Since we might not have a ViewModel here, we get dependencies via Hilt EntryPoint
+    // Colors
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val orangeColor = colorResource(R.color.pro_orange)
+    val backgroundColor = colorResource(R.color.pro_white_smoke)
+
     val hiltEntryPoint = EntryPointAccessors.fromActivity(
-        context as androidx.activity.ComponentActivity, // Assuming context is from an Activity
+        context as androidx.activity.ComponentActivity,
         SignupScreenEntryPoint::class.java
     )
     val firebaseAuth = hiltEntryPoint.getFirebaseAuth()
     val userDao = hiltEntryPoint.getUserDao()
 
-    //  UI Feedback
     LaunchedEffect(signupStatus) {
         when (val status = signupStatus) {
             is SignupResult.Success -> {
-                Toast.makeText(context, "Signup Successful!", Toast.LENGTH_SHORT).show()
-                onSignupSuccess(status.userId) // Call the callback with the local DB ID
+                Toast.makeText(context, "حساب کاربری با موفقیت ایجاد شد", Toast.LENGTH_SHORT).show()
+                onSignupSuccess(status.userId)
             }
             is SignupResult.Error -> {
                 Toast.makeText(context, status.message, Toast.LENGTH_LONG).show()
-                signupStatus = SignupResult.Idle // Reset status after showing error
+                signupStatus = SignupResult.Idle
             }
-            else -> {} // Idle or Loading
+            else -> {}
         }
     }
 
-    //  Signup Logic
     fun attemptSignup() {
-        // Basic Validation
+        // ... (Logic remains the same)
         if (email.isBlank() || password.isBlank() || confirmPassword.isBlank() || name.isBlank()) {
-            signupStatus = SignupResult.Error("Please fill in all fields.")
+            signupStatus = SignupResult.Error("لطفا تمام فیلدها را پر کنید.")
             return
         }
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            signupStatus = SignupResult.Error("Invalid email format.")
+            signupStatus = SignupResult.Error("فرمت ایمیل صحیح نیست.")
             return
         }
         if (password != confirmPassword) {
-            signupStatus = SignupResult.Error("Passwords do not match.")
+            signupStatus = SignupResult.Error("رمز عبور و تکرار آن یکسان نیستند.")
             return
         }
-        // Add password strength check if desired
-
         signupStatus = SignupResult.Loading
-
         coroutineScope.launch {
             try {
-                // Create user in Firebase Authentication
-                Log.d(TAG, "Attempting Firebase user creation...")
                 val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
                 val firebaseUser = authResult.user
-                Log.d(TAG, "Firebase user created successfully: UID=${firebaseUser?.uid}")
-
                 if (firebaseUser != null) {
-                    //  Create user in local Room database (WITHOUT password)
-                    val localUser = User(
-                        // id will be auto-generated by Room
-                        email = email,
-                        password = "", // Store empty string or null for password locally
-                        name = name,
-                        firebaseUid = firebaseUser.uid // Store Firebase UID
-                    )
-
-                    Log.d(TAG, "Attempting local DB user insertion...")
-                    // Insert into Room
-                    val insertedUserId = withContext(Dispatchers.IO) {
-                        userDao.insert(localUser) // Assuming insert returns the new row ID (Long)
-                    }
-                    Log.d(TAG, "Local DB user inserted with ID: $insertedUserId")
-
-                    // Report Success with the LOCAL Database ID
+                    val localUser = User(email = email, password = "", name = name, firebaseUid = firebaseUser.uid)
+                    val insertedUserId = withContext(Dispatchers.IO) { userDao.insert(localUser) }
                     signupStatus = SignupResult.Success(insertedUserId)
-
                 } else {
-                    // Should not happen if createUserWithEmailAndPassword succeeds, but handle defensively
-                    Log.e(TAG, "Firebase user was null after successful creation task.")
-                    signupStatus = SignupResult.Error("Signup failed: Could not get user details.")
+                    signupStatus = SignupResult.Error("خطا در ایجاد کاربر.")
                 }
-
-            } catch (e: FirebaseAuthWeakPasswordException) {
-                Log.w(TAG, "Signup failed: Weak password", e)
-                signupStatus = SignupResult.Error("Password is too weak (at least 6 characters).")
-            } catch (e: FirebaseAuthUserCollisionException) {
-                Log.w(TAG, "Signup failed: Email already in use", e)
-                signupStatus = SignupResult.Error("Email address is already registered.")
-            } catch (e: Exception) { // Catch other exceptions (network, DB insert, etc.)
-                Log.e(TAG, "Signup failed", e)
-                signupStatus = SignupResult.Error("Signup failed: ${e.localizedMessage}")
+            } catch (e: Exception) {
+                signupStatus = SignupResult.Error("خطا: ${e.localizedMessage}")
             }
         }
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("ایجاد حساب کاربری") }) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .imePadding() // ✅ 1. Padding for keyboard
+                .verticalScroll(rememberScrollState()), // اضافه کردن اسکرول برای صفحه گوشی‌های کوچک
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
 
-            Row(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .weight(1f), // Keep layout structure
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    modifier = Modifier.padding(top = 16.dp),
-                    text = "Soundwave",
-                    style = LocalTextStyle.current.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 40.sp
-                    ),
-                    color = colorResource(R.color.purple_700)
-                )
+            // Logo
+            Spacer(modifier = Modifier.height(24.dp))
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "logo",
+                modifier = Modifier.size(100.dp)
+            )
+            Text(
+                text = "بپیوندید Nova AI به",
+                style = MaterialTheme.typography.headlineSmall,
+                color = navyColor, // ۳. تیتر: سرمه‌ای
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
 
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "logo",
-                    modifier = Modifier.size(160.dp)
-                )
-            }
-
+            // Inputs
             MyBasicTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = "نام",
+                label = "نام و نام خانوادگی",
                 trailingIcon = Icons.Outlined.Person,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -255,30 +192,37 @@ fun SignupScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
 
-            if (isLoading) {
-                CircularProgressIndicator()
-            } else {
-                RoundedButton(
-                    text = "ثبت نام",
-                    onClick = { attemptSignup() },
-                    modifier = Modifier.fillMaxWidth()
+            // Signup Button
+            Button(
+                onClick = { attemptSignup() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                enabled = !isLoading,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = orangeColor, // ۴. دکمه: نارنجی
+                    contentColor = Color.White
                 )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("ثبت نام", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
             TextButton(
                 onClick = { navController.popBackStack() },
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = colorResource(R.color.purple_700)
-                )
+                colors = ButtonDefaults.textButtonColors(contentColor = navyColor) // ۵. لینک: سرمه‌ای
             ) {
-                Text("حساب کاربری دارید؟ ورود")
+                Text("قبلاً ثبت‌نام کرده‌اید؟ ورود")
             }
         }
     }
 }
 
-// --- Hilt EntryPoint to get dependencies in Composable ---
 @dagger.hilt.EntryPoint
 @dagger.hilt.InstallIn(dagger.hilt.android.components.ActivityComponent::class)
 interface SignupScreenEntryPoint {

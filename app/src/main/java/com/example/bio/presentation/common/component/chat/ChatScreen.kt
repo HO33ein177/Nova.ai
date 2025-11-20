@@ -1,35 +1,23 @@
 package com.example.bio.presentation.common.component.chat
 
 import android.Manifest
-import android.text.BidiFormatter
-import android.text.TextDirectionHeuristics
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -40,52 +28,32 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -99,20 +67,22 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+<<<<<<< Updated upstream
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
+=======
+import java.util.*
+>>>>>>> Stashed changes
 
-
-// Data class for representing a conversation summary in the history list
- data class ConversationSummary(
+data class ConversationSummary(
     val conversationId: String,
     val lastMessageTimestamp: Long,
     val firstMessageContent: String?
- )
+)
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun ChatScreen(
     navController: NavController,
@@ -122,108 +92,91 @@ fun ChatScreen(
     val context = LocalContext.current
     val chatViewModel: ChatViewModel = hiltViewModel()
     val conversationListViewModel: ConversationListViewModel = hiltViewModel()
-    val userViewModel: UserViewModel = hiltViewModel() // Inject UserViewModel for logout
-
+    val userViewModel: UserViewModel = hiltViewModel()
 
     val chatHistory by chatViewModel.chatHistory.collectAsStateWithLifecycle()
     val isLoading by chatViewModel.isLoading.collectAsStateWithLifecycle()
     val isRecording by chatViewModel.isRecording.collectAsStateWithLifecycle()
-
     val conversationSummaries by conversationListViewModel.conversationSummaries.collectAsStateWithLifecycle()
     val isHistoryLoading by conversationListViewModel.isLoading.collectAsStateWithLifecycle()
-
 
     var userInput by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
-
-    val recordAudioPermissionState = rememberPermissionState(
-        Manifest.permission.RECORD_AUDIO
-    )
+    val recordAudioPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
     var showRationaleDialog by remember { mutableStateOf(false) }
     var isHistoryPageOpen by remember { mutableStateOf(false) }
 
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val orangeColor = colorResource(R.color.pro_orange)
+    val backgroundColor = colorResource(R.color.pro_white_smoke)
+
     LaunchedEffect(userId, conversationId) {
-        Log.d("ChatScreen", "LaunchedEffect: Loading data for User $userId, Current Conversation $conversationId")
         chatViewModel.loadDataForConversation(userId, conversationId)
     }
 
-
-    val userInfo by userViewModel.userInfo.collectAsStateWithLifecycle()
-
-
     LaunchedEffect(userId, isHistoryPageOpen) {
         if (isHistoryPageOpen) {
-            Log.d("ChatScreen", "LaunchedEffect: History page opened. Loading conversations for User $userId")
             conversationListViewModel.loadConversationSummaries(userId)
         }
     }
 
     LaunchedEffect(chatHistory.size) {
         if (chatHistory.isNotEmpty()) {
-            coroutineScope.launch {
-                listState.animateScrollToItem(chatHistory.size - 1)
-            }
+            listState.animateScrollToItem(chatHistory.size - 1)
+        }
+    }
+
+    val isImeVisible = WindowInsets.isImeVisible
+    LaunchedEffect(isImeVisible) {
+        if (isImeVisible && chatHistory.isNotEmpty()) {
+            listState.animateScrollToItem(chatHistory.size - 1)
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
+            containerColor = backgroundColor,
+            contentWindowInsets = ScaffoldDefaults.contentWindowInsets
+                .exclude(WindowInsets.navigationBars)
+                .exclude(WindowInsets.ime),
+            modifier = Modifier.imePadding(),
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "Chat: ...${conversationId.takeLast(6)}",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    actions = {
-                        IconButton(onClick = {
-                            isHistoryPageOpen = true
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.History,
-                                contentDescription = "History"
-                            )
-                        }
-                        // Logout Button
-                        IconButton(onClick = {
-                            userViewModel.signOut() // Perform Firebase sign out
-                            // Navigate to Login screen and clear back stack
-                            navController.navigate(AppDestinations.LOGIN_ROUTE) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    inclusive = true // Clears all screens up to and including the start destination of the graph
-                                }
-                                launchSingleTop = true // Avoid multiple copies of Login screen
+                Surface(shadowElevation = 4.dp) {
+                    TopAppBar(
+                        title = {
+                            Column {
+                                Text(
+                                    text = "Nova AI",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "Chat ID: ...${conversationId.takeLast(4)}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
                             }
-                            Toast.makeText(context, "Logged out", Toast.LENGTH_SHORT).show()
-                        }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Logout,
-                                contentDescription = "Logout"
-                            )
-                        }
-                        IconButton(onClick = {
-                            // فعلا نام یک فایل PDF را به صورت ثابت ارسال می‌کنیم
-                            // در آینده می‌توانید به کاربر اجازه انتخاب دهید
-                            val pdfForQuiz = "نام_فایل_پی‌دی‌اف_شما.pdf"
-                            navController.navigate(AppDestinations.QUIZ_ENTRY_ROUTE)
-                        }) {
-                            Icon(painterResource(id = R.drawable.ic_quiz), contentDescription = "Take a Quiz") // یک آیکون آزمون اضافه کنید
-                        }
-                    },
-
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        },
+                        actions = {
+                            IconButton(onClick = { navController.navigate(AppDestinations.SUBSCRIPTION_ROUTE) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.WorkspacePremium,
+                                    contentDescription = "Subscription",
+                                    tint = orangeColor
+                                )
+                            }
+                            IconButton(onClick = { isHistoryPageOpen = true }) {
+                                Icon(Icons.Filled.History, "History", tint = Color.White)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = navyColor
+                        )
                     )
-
-
-
-                )
+                }
             },
             bottomBar = {
                 ChatInputArea(
@@ -233,7 +186,6 @@ fun ChatScreen(
                         if (userInput.isNotBlank()) {
                             chatViewModel.sendMessage(userInput)
                             userInput = ""
-                            keyboardController?.hide()
                         }
                     },
                     isLoading = isLoading,
@@ -259,65 +211,47 @@ fun ChatScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(backgroundColor, Color.White)
+                        )
+                    )
             ) {
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
                 ) {
+<<<<<<< Updated upstream
                     items(chatHistory) { message ->
                         ChatBubble(message = message)
+=======
+                    items(chatHistory, key = { it.id }) { message ->
+                        ChatBubble(
+                            message = message,
+                            onDelete = { chatViewModel.deleteMessage(message.id) }
+                        )
+>>>>>>> Stashed changes
                     }
 
                     if (isLoading && chatHistory.isEmpty()) {
                         item {
-                            Box(modifier = Modifier.fillMaxSize().padding(vertical = 10.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(modifier = Modifier.size(40.dp))
-                                Text("Loading History...", modifier = Modifier.padding(top = 60.dp))
+                            Box(modifier = Modifier.fillMaxSize().padding(top = 50.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = orangeColor)
                             }
                         }
                     } else if (isLoading && !isRecording) {
                         item {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(start = 5.dp),
-                                horizontalArrangement = Arrangement.Start
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                                    modifier = Modifier.wrapContentSize()
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp).size(18.dp),
-                                        strokeWidth = 2.dp
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    if (isRecording) {
-                        item {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp).background(Color.Red.copy(alpha = 0.1f)),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ){
-                                Icon(Icons.Filled.Mic, contentDescription = "Recording", tint = Color.Red, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text("Recording...", color = Color.Red)
-                            }
+                            TypingIndicator(navyColor)
                         }
                     }
                 }
 
                 if (chatHistory.isEmpty() && !isLoading && !isRecording) {
-                    InitialPrompts(onPromptClick = { prompt ->
-                        chatViewModel.sendMessage(prompt)
-                    })
+                    InitialPrompts(onPromptClick = { chatViewModel.sendMessage(it) })
                 }
             }
         }
@@ -328,39 +262,55 @@ fun ChatScreen(
             conversationSummaries = conversationSummaries,
             isLoading = isHistoryLoading,
             onHistoryItemSelected = { selectedConvId ->
-                Log.d("ChatScreen", "History item selected: $selectedConvId")
                 if (selectedConvId != conversationId) {
                     navController.navigate(AppDestinations.createChatRoute(userId, selectedConvId)) {
-                        // Pop up to the login route to clear the current chat from the back stack
                         popUpTo(AppDestinations.LOGIN_ROUTE) { inclusive = false }
                     }
                 }
                 isHistoryPageOpen = false
             },
-            onNewChatClicked = { newConvId -> // Handle new chat click
-                Log.d("ChatScreen", "New chat clicked. Navigating to new conversation: $newConvId")
+            onNewChatClicked = { newConvId ->
                 navController.navigate(AppDestinations.createChatRoute(userId, newConvId)) {
                     popUpTo(AppDestinations.LOGIN_ROUTE) { inclusive = false }
                 }
                 isHistoryPageOpen = false
             },
-            currentUserId = userId
+            currentUserId = userId,
+            onLogout = {
+                userViewModel.signOut()
+                navController.navigate(AppDestinations.LOGIN_ROUTE) {
+                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                    launchSingleTop = true
+                }
+                Toast.makeText(context, "از حساب خارج شدید", Toast.LENGTH_SHORT).show()
+            }
         )
+
+        AnimatedVisibility(
+            visible = isRecording,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            RecordingOverlay()
+        }
     }
 
     if (showRationaleDialog) {
         AlertDialog(
             onDismissRequest = { showRationaleDialog = false },
-            title = { Text("Permission Required") },
-            text = { Text("Audio recording permission is needed to record messages. Please grant the permission.") },
+            title = { Text("دسترسی میکروفون") },
+            text = { Text("برای ضبط پیام صوتی نیاز به دسترسی میکروفون داریم.") },
             confirmButton = {
-                Button(onClick = {
-                    showRationaleDialog = false
-                    recordAudioPermissionState.launchPermissionRequest()
-                }) { Text("Grant") }
+                Button(
+                    onClick = {
+                        showRationaleDialog = false
+                        recordAudioPermissionState.launchPermissionRequest()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = orangeColor)
+                ) { Text("تایید") }
             },
             dismissButton = {
-                Button(onClick = { showRationaleDialog = false }) { Text("Deny") }
+                Button(onClick = { showRationaleDialog = false }, colors = ButtonDefaults.textButtonColors(contentColor = navyColor)) { Text("لغو") }
             }
         )
     }
@@ -378,79 +328,156 @@ fun ChatInputArea(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isMicPressed by interactionSource.collectIsPressedAsState()
+    val orangeColor = colorResource(R.color.pro_orange)
+    val navyColor = colorResource(R.color.pro_navy_dark)
+
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isRecording) 1.2f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500),
+            repeatMode = RepeatMode.Reverse
+        ), label = "pulse"
+    )
 
     LaunchedEffect(isMicPressed) {
         if (isMicPressed) {
             if (!isRecording && !isLoading) onRecordStart()
         } else {
-            if (isRecording) {
-                onRecordStop()
-            }
+            if (isRecording) onRecordStop()
         }
     }
 
     Surface(
-        shadowElevation = 8.dp,
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedTextField(
-                value = userInput,
-                onValueChange = onUserInputChanged,
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Type or hold mic...") },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { if (!isRecording && userInput.isNotBlank()) onSendMessage() }),
-                enabled = !isRecording && !isLoading,
-                maxLines = 3,
-                shape = RoundedCornerShape(24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(
-                onClick = { /* Interaction handled by LaunchedEffect */ },
-                interactionSource = interactionSource,
+            // --- دکمه میکروفون ---
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(50.dp)
+                    .graphicsLayer {
+                        scaleX = if (isRecording) pulseScale else 1f
+                        scaleY = if (isRecording) pulseScale else 1f
+                    }
                     .background(
-                        if (isRecording) Color.Red.copy(alpha = 0.8f)
-                        else MaterialTheme.colorScheme.secondaryContainer,
+                        color = if (isRecording) orangeColor else navyColor.copy(alpha = 0.1f),
                         shape = CircleShape
-                    ),
-                enabled = !isLoading
+                    )
+                    .clip(CircleShape)
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                if (!isLoading) {
+                                    try {
+                                        onRecordStart()
+                                        tryAwaitRelease()
+                                    } finally {
+                                        onRecordStop()
+                                    }
+                                }
+                            }
+                        )
+                    }
             ) {
                 Icon(
-                    Icons.Filled.Mic,
-                    contentDescription = if (isRecording) "Stop Recording" else "Start Recording",
-                    tint = if (isRecording) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
+                    imageVector = Icons.Filled.Mic,
+                    contentDescription = "Record",
+                    tint = if (isRecording) Color.White else navyColor,
                     modifier = Modifier.size(24.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(
-                onClick = onSendMessage,
-                enabled = userInput.isNotBlank() && !isLoading && !isRecording,
-                modifier = Modifier.size(50.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
-                colors = IconButtonDefaults.iconButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
-                )
+            // --- ورودی متن (هوشمند) ---
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 50.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+                shadowElevation = 2.dp,
+                border = if (isRecording) BorderStroke(1.dp, orangeColor) else null
             ) {
-                Icon(Icons.Filled.Send, contentDescription = "Send message")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = userInput,
+                        onValueChange = onUserInputChanged,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+
+                        // ✅✅✅ اصلاح جهت متن: ContentOrLtr
+                        // اگر متن فارسی باشد راست‌چین می‌شود، اگر انگلیسی باشد چپ‌چین
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                            textDirection = androidx.compose.ui.text.style.TextDirection.ContentOrLtr
+                        ),
+
+                        placeholder = {
+                            Text(
+                                "...پیامی بنویسید",
+                                color = Color.Gray,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth(),
+                                // ✅ متن پیش‌فرض را همیشه راست‌چین نگه می‌داریم (چون فارسی است)
+                                textAlign = TextAlign.Right
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(onSend = { if (userInput.isNotBlank()) onSendMessage() }),
+                        enabled = !isLoading,
+                        maxLines = 4,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent,
+                            disabledBorderColor = Color.Transparent,
+                            errorBorderColor = Color.Transparent,
+                            cursorColor = orangeColor,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
+                    )
+                }
+            }
+
+            // --- دکمه ارسال ---
+            val isSendEnabled = userInput.isNotBlank() && !isLoading && !isRecording
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(
+                        color = if (isSendEnabled) orangeColor else navyColor.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    )
+                    .clip(CircleShape)
+                    .clickable(
+                        enabled = isSendEnabled,
+                        onClick = onSendMessage
+                    )
+            ) {
+                Icon(
+                    // اگر آیکون جهت‌دار است، برای زبان فارسی باید Mirrored شود
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = "Send",
+                    tint = if (isSendEnabled) Color.White else navyColor,
+                    modifier = Modifier.size(22.dp)
+                )
             }
         }
     }
 }
 
 @Composable
+<<<<<<< Updated upstream
 fun InitialPrompts(onPromptClick: (String) -> Unit) {
     val prompts = listOf(
         "Explain quantum physics",
@@ -491,16 +518,32 @@ fun ChatBubble(message: ChatMessage) {
     val bubbleColor = if (message.isFromUser) MaterialTheme.colorScheme.primaryContainer
     else if (message.isError) MaterialTheme.colorScheme.errorContainer
     else MaterialTheme.colorScheme.secondaryContainer
+=======
+fun ChatBubble(message: ChatMessage, onDelete: () -> Unit) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
-    val textColor = if (message.isFromUser) MaterialTheme.colorScheme.onPrimaryContainer
-    else if (message.isError) MaterialTheme.colorScheme.onErrorContainer
-    else MaterialTheme.colorScheme.onSecondaryContainer
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val surfaceColor = colorResource(R.color.pro_surface_light)
+>>>>>>> Stashed changes
+
+    val bubbleColor = if (message.isFromUser) navyColor else surfaceColor
+    val textColor = if (message.isFromUser) Color.White else Color.Black
+    val shadowElevation = if (message.isFromUser) 0.dp else 2.dp
+
+    val shape = if (message.isFromUser) {
+        RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
+    } else {
+        RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp)
+    }
 
     val alignment = if (message.isFromUser) Alignment.CenterEnd else Alignment.CenterStart
     val isRtl = message.text.any { it in '\u0600'..'\u06FF' }
     val textAlignment = if (isRtl) TextAlign.Right else TextAlign.Left
     val layoutDirection = if (isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr
 
+<<<<<<< Updated upstream
 
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
         Box(
@@ -529,6 +572,198 @@ fun ChatBubble(message: ChatMessage) {
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                     textAlign = textAlignment
                 )
+=======
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Column(modifier = Modifier.align(alignment)) {
+            Row(
+                verticalAlignment = Alignment.Bottom
+            ) {
+                if (!message.isFromUser) {
+                    Surface(
+                        modifier = Modifier.size(32.dp),
+                        shape = CircleShape,
+                        color = navyColor.copy(alpha = 0.1f),
+                        shadowElevation = 0.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Image(
+                                painter = painterResource(id = R.drawable.robo_icon),
+                                contentDescription = "Bot",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
+                if (message.isFromUser && !message.isError) {
+                    Box {
+                        IconButton(
+                            onClick = { menuExpanded = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "Options",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text("کپی") },
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(message.text))
+                                    Toast.makeText(context, "کپی شد", Toast.LENGTH_SHORT).show()
+                                    menuExpanded = false
+                                },
+                                leadingIcon = { Icon(Icons.Default.ContentCopy, null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("حذف", color = Color.Red) },
+                                onClick = {
+                                    onDelete()
+                                    menuExpanded = false
+                                },
+                                leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+
+                Surface(
+                    shape = shape,
+                    color = bubbleColor,
+                    shadowElevation = shadowElevation,
+                    modifier = Modifier.widthIn(max = 280.dp)
+                ) {
+                    Text(
+                        text = message.text,
+                        color = textColor,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 24.sp),
+                        textAlign = if (message.text.any { it in '\u0600'..'\u06FF' }) TextAlign.Right else TextAlign.Left
+                    )
+                }
+
+                if (!message.isFromUser && !message.isError) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.MoreVert, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                        }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(text = { Text("کپی") }, onClick = {
+                                clipboardManager.setText(AnnotatedString(message.text))
+                                Toast.makeText(context, "کپی شد", Toast.LENGTH_SHORT).show()
+                                menuExpanded = false
+                            }, leadingIcon = { Icon(Icons.Default.ContentCopy, null) })
+
+                            DropdownMenuItem(text = { Text("حذف", color = Color.Red) }, onClick = {
+                                onDelete()
+                                menuExpanded = false
+                            }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TypingIndicator(color: Color) {
+    Row(
+        modifier = Modifier
+            .padding(start = 16.dp, top = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("در حال نوشتن...", style = MaterialTheme.typography.bodySmall, color = color)
+    }
+}
+
+@Composable
+fun InitialPrompts(onPromptClick: (String) -> Unit) {
+    val prompts = listOf(
+        "تفسیر آزمایش خون",
+        "توصیه های سلامتی برای دیابت",
+        "برنامه غذایی سالم",
+        "اطلاعات دارویی"
+    )
+    val navyColor = colorResource(R.color.pro_navy_dark)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.robo_icon),
+            contentDescription = null,
+            modifier = Modifier
+                .size(100.dp)
+                .padding(bottom = 24.dp),
+            tint = navyColor.copy(alpha = 0.2f)
+        )
+
+        Text(
+            "چطور می‌توانم کمکتان کنم؟",
+            style = MaterialTheme.typography.headlineSmall,
+            color = navyColor,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        // لیست پیشنهادها
+        prompts.forEach { prompt ->
+            Card(
+                onClick = { onPromptClick(prompt) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                // ✅✅✅ تغییر مهم: اعمال جهت راست‌چین (RTL) برای محتوای کارت
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth() // پر کردن عرض برای چیدمان درست
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // چون RTL کردیم، این آیکون اول (سمت راست) قرار می‌گیرد
+                        Icon(
+                            imageVector = Icons.Filled.AutoAwesome,
+                            contentDescription = null,
+                            tint = navyColor.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        // متن بعد از آیکون (سمت چپ آیکون) قرار می‌گیرد
+                        Text(
+                            text = prompt,
+                            color = navyColor,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f), // پر کردن فضای باقی‌مانده
+                            textAlign = TextAlign.Right // راست‌چین کردن متن داخل فضای خودش
+                        )
+                    }
+                }
+>>>>>>> Stashed changes
             }
         }
     }
@@ -542,189 +777,124 @@ fun HistoryPage(
     conversationSummaries: List<ConversationSummary>,
     isLoading: Boolean,
     onHistoryItemSelected: (String) -> Unit,
-    onNewChatClicked: (String) -> Unit, // New callback for starting a new chat
-    currentUserId: Int
+    onNewChatClicked: (String) -> Unit,
+    currentUserId: Int,
+    onLogout: () -> Unit
 ) {
-    var selectedConversationId by remember { mutableStateOf<String?>(null) }
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val orangeColor = colorResource(R.color.pro_orange)
 
-    fun formatTimestamp(timestamp: Long): String {
-        val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
-        sdf.timeZone = TimeZone.getDefault()
-        return sdf.format(Date(timestamp))
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) { // Main container for the drawer and overlay
+    Box(modifier = Modifier.fillMaxSize()) {
         if (visible) {
-            Box( // Overlay
+            Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(Color.Black.copy(alpha = 0.6f))
                     .clickable { onClose() }
             )
         }
 
         AnimatedVisibility(
             visible = visible,
-            enter = slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(300)),
-            exit = slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(300))
+            enter = slideInHorizontally(initialOffsetX = { -it }),
+            exit = slideOutHorizontally(targetOffsetX = { -it })
         ) {
-            Scaffold(
+            Surface(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth(0.85f)
-                    .clip(RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp))
-                    .background(MaterialTheme.colorScheme.surface) // Explicit background for Scaffold
-                    .clickable(enabled = false) { }, // Consume clicks on the drawer itself
-                floatingActionButton = {
-                    FloatingActionButton(
-                        onClick = {
-                            val newConversationId = UUID.randomUUID().toString()
-                            onNewChatClicked(newConversationId) // Call the new callback
-                        },
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(bottom = 60.dp) // Ensure it's above the profile info if screen is short
-                    ) {
-                        Icon(Icons.Filled.Add, "Start New Chat")
-                    }
-                }
-            ) { scaffoldPadding -> // Content of the drawer
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(scaffoldPadding)
-                        .padding(top = 8.dp, start = 8.dp, end = 8.dp) // Additional internal padding
-                ) {
+                    .fillMaxWidth(0.85f),
+                color = colorResource(R.color.pro_white_smoke),
+                shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Header
                     Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp)
+                            .padding(top = 18.dp)
+                            .background(navyColor)
+                            .padding(12.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = { onClose() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Close History",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
                         }
-                        Text(
-                            text = "Chat History",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
-                        )
-                        Image(
-                            painter = painterResource(id = R.drawable.robo_icon),
-                            contentDescription = "App Icon",
-                            modifier = Modifier.size(36.dp)
-                        )
+                        Spacer(Modifier.weight(1f))
+                        Text("تاریخچه چت‌ها", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                     }
 
-                    Divider(
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
-                    )
+                    // New Chat Button
+                    Surface(
+                        color = Color.White,
+                        shadowElevation = 2.dp,
+                        modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp)).clickable {
+                            onNewChatClicked(UUID.randomUUID().toString())
+                        }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Filled.Add, null, tint = orangeColor)
+                            Spacer(Modifier.width(8.dp))
+                            Text("شروع چت جدید", color = orangeColor, fontWeight = FontWeight.Bold)
+                        }
+                    }
 
                     if (isLoading) {
                         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
-                    } else if (conversationSummaries.isEmpty()) {
-                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            Text(
-                                "No chat history yet. Tap '+' to start!",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(16.dp)
-                            )
+                            CircularProgressIndicator(color = orangeColor)
                         }
                     } else {
                         LazyColumn(modifier = Modifier.weight(1f)) {
-                            val todayStart = getStartOfDayMillis()
-                            val yesterdayStart = todayStart - (24 * 60 * 60 * 1000)
-                            val grouped = conversationSummaries.groupBy { summary ->
-                                when {
-                                    summary.lastMessageTimestamp >= todayStart -> "Today"
-                                    summary.lastMessageTimestamp >= yesterdayStart -> "Yesterday"
-                                    else -> "Older"
-                                }
-                            }
-                            val groupOrder = listOf("Today", "Yesterday", "Older")
-
-                            groupOrder.forEach { dateGroup ->
-                                grouped[dateGroup]?.let { itemsInGroup ->
-                                    if (itemsInGroup.isNotEmpty()) {
-                                        item {
-                                            HistoryTitleRow(text = dateGroup)
-                                        }
-                                        items(itemsInGroup, key = { it.conversationId }) { summary ->
-                                            HistoryRow(
-                                                summary = summary,
-                                                isSelected = summary.conversationId == selectedConversationId,
-                                                onItemClick = {
-                                                    selectedConversationId = it.conversationId
-                                                    onHistoryItemSelected(it.conversationId)
-                                                },
-                                                formatTimestamp = ::formatTimestamp
-                                            )
-                                        }
-                                    }
-                                }
+                            items(conversationSummaries) { summary ->
+                                HistoryRow(
+                                    summary = summary,
+                                    isSelected = false,
+                                    onItemClick = { onHistoryItemSelected(it.conversationId) },
+                                    formatTimestamp = { time -> SimpleDateFormat("MM/dd HH:mm", Locale.getDefault()).format(Date(time)) }
+                                )
+                                Divider(color = Color.LightGray.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
                             }
                         }
                     }
 
-                    // User Profile Info (at the bottom)
-                    // This will be above the FAB due to Scaffold's layout behavior
-                    Divider(
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
-                    )
+                    Divider(color = Color.LightGray)
+                    // Footer
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp) // Added bottom padding
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.secondaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "U",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                        Surface(shape = CircleShape, color = navyColor.copy(alpha = 0.1f), modifier = Modifier.size(40.dp)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("U", color = navyColor, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text("کاربر", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                            Text("$currentUserId", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        IconButton(onClick = onLogout) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = "خروج",
+                                tint = Color.Red.copy(alpha = 0.7f)
                             )
                         }
-                        Text(
-                            text = "User ID: $currentUserId",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(start = 12.dp),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
                     }
                 }
             }
         }
     }
 }
-
-fun getStartOfDayMillis(): Long {
-    val calendar = java.util.Calendar.getInstance()
-    calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-    calendar.set(java.util.Calendar.MINUTE, 0)
-    calendar.set(java.util.Calendar.SECOND, 0)
-    calendar.set(java.util.Calendar.MILLISECOND, 0)
-    return calendar.timeInMillis
-}
-
 
 @Composable
 fun HistoryRow(
@@ -733,58 +903,105 @@ fun HistoryRow(
     onItemClick: (ConversationSummary) -> Unit,
     formatTimestamp: (Long) -> String
 ) {
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-    else MaterialTheme.colorScheme.surface
-    val contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-    else MaterialTheme.colorScheme.onSurface
+    val navyColor = colorResource(R.color.pro_navy_dark)
 
     ListItem(
+        modifier = Modifier.clickable { onItemClick(summary) },
         headlineContent = {
             Text(
-                text = summary.firstMessageContent?.take(100) ?: "Chat: ...${summary.conversationId.takeLast(8)}",
+                text = summary.firstMessageContent?.take(40) ?: "گفتگوی جدید",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Medium,
-                color = contentColor
+                color = navyColor
             )
         },
         supportingContent = {
-            Text(
-                text = formatTimestamp(summary.lastMessageTimestamp),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (isSelected) contentColor.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(text = formatTimestamp(summary.lastMessageTimestamp), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
         },
         leadingContent = {
-            Icon(
-                Icons.Filled.Chat,
-                contentDescription = "Chat Icon",
-                tint = if (isSelected) contentColor else MaterialTheme.colorScheme.secondary
-            )
+            Icon(Icons.Filled.Chat, null, tint = navyColor.copy(alpha = 0.5f))
         },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onItemClick(summary) }
-            .padding(vertical = 4.dp),
-        colors = ListItemDefaults.colors(
-            containerColor = backgroundColor
-        )
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
 }
 
+// ✅✅✅ اصلاح شده: انیمیشن ضبط با چیدمان صحیح (Column)
 @Composable
-fun HistoryTitleRow(text: String) {
-    val formattedText = remember(text) {
-        BidiFormatter.getInstance().unicodeWrap(text, TextDirectionHeuristics.ANYRTL_LTR)
-    }
-    Text(
-        text = formattedText,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)
+fun RecordingOverlay() {
+    val orangeColor = colorResource(R.color.pro_orange)
+
+    val infiniteTransition = rememberInfiniteTransition(label = "mic_pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700),
+            repeatMode = RepeatMode.Reverse
+        ), label = "scale"
     )
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700),
+            repeatMode = RepeatMode.Reverse
+        ), label = "alpha"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.7f))
+            .clickable(enabled = false) {},
+        contentAlignment = Alignment.Center
+    ) {
+        // استفاده از Column برای چیدن آیکون و متن زیر هم
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                // دایره پالس
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            this.alpha = alpha
+                        }
+                        .background(orangeColor, CircleShape)
+                )
+
+                // آیکون ثابت
+                Surface(
+                    modifier = Modifier.size(80.dp),
+                    shape = CircleShape,
+                    color = orangeColor,
+                    shadowElevation = 10.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Filled.Mic,
+                            contentDescription = "Recording",
+                            tint = Color.White,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Text(
+                text = "...در حال ضبط",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center, // ✅ متن را داخل کادر وسط‌چین می‌کند
+                modifier = Modifier.fillMaxWidth() // ✅ عرض کامل می‌گیرد تا وسط‌چین دقیق باشد
+            )
+        }
+    }
 }

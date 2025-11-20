@@ -12,7 +12,8 @@ object AppDestinations {
     const val LOGIN_ROUTE = "login"
     const val SIGNUP_ROUTE = "signup"
     const val FORGET_PASSWORD_ROUTE = "forget_Password"
-
+    const val SUBSCRIPTION_ROUTE = "subscription"
+    const val PAYMENT_ROUTE = "payment/{planTitle}/{planPrice}"
     // Conversation List Route
     const val CONVERSATION_LIST_ROUTE_BASE = "conversationList"
     const val CONVERSATION_LIST_ROUTE = "$CONVERSATION_LIST_ROUTE_BASE/{${NavArguments.USER_ID}}"
@@ -38,4 +39,7 @@ object AppDestinations {
     private const val QUIZ_SCREEN_ROUTE_BASE = "quiz_screen"
     const val QUIZ_SCREEN_ROUTE = "$QUIZ_SCREEN_ROUTE_BASE/{${NavArguments.PDF_FILENAME}}"
     fun createQuizRoute(pdfFilename: String) = "$QUIZ_SCREEN_ROUTE_BASE/$pdfFilename"
+    fun createPaymentRoute(planTitle: String, planPrice: String): String {
+        return "payment/$planTitle/$planPrice"
+    }
 }

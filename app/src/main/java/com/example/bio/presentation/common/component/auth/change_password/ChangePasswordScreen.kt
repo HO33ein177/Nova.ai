@@ -2,28 +2,14 @@ package com.example.bio.presentation.common.component.auth.change_password
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.outlined.MarkEmailRead
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,16 +21,13 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.bio.R
 import com.example.bio.presentation.common.component.reusable.MyBasicTextField
-import com.example.bio.presentation.common.component.reusable.RoundedButton
-
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,114 +35,117 @@ fun ChangePasswordScreen(
     navController: NavController,
     viewModel: ChangePasswordViewModel = hiltViewModel()
 ) {
-    // Observe state from the ViewModel
     val email by viewModel.email
     val resetStatus by viewModel.resetStatus
     val context = LocalContext.current
     val isLoading = resetStatus is ResetStatus.Loading
 
-    // Show feedback Toast/Snackbar based on resetStatus changes
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val orangeColor = colorResource(R.color.pro_orange)
+    val backgroundColor = colorResource(R.color.pro_white_smoke)
+    val greyText = colorResource(R.color.pro_grey_text)
+
     LaunchedEffect(resetStatus) {
         when (val status = resetStatus) {
             is ResetStatus.Success -> {
-                Toast.makeText(context, "ایمیل بازنشانی رمز عبور با موفقیت ارسال شد!", Toast.LENGTH_LONG).show()
-                viewModel.resetStatusHandled() // Reset status after showing toast
+                Toast.makeText(context, "لینک بازیابی ارسال شد.", Toast.LENGTH_LONG).show()
+                viewModel.resetStatusHandled()
             }
             is ResetStatus.Error -> {
                 Toast.makeText(context, status.message, Toast.LENGTH_LONG).show()
-                viewModel.resetStatusHandled() // Reset status after showing toast
+                viewModel.resetStatusHandled()
             }
-            else -> { /* Idle or Loading - No immediate feedback needed */ }
+            else -> { }
         }
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("                       بازیابی رمز عبور") })
-        },
-         containerColor = Color(0xFFE8EAF6),
     ) { paddingValues ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp, vertical = 32.dp), // Consistent padding
+                .imePadding() // ✅ 1. Padding for keyboard
+                .verticalScroll(rememberScrollState()) // ✅ 2. Enable scrolling
+                .padding(horizontal = 24.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center // Center content vertically
+            verticalArrangement = Arrangement.Center
         ) {
-            Row(
-                modifier = Modifier
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // --- Logo and Title ---
-                Text(
-                    modifier = Modifier.padding(top = 16.dp),
-                    text = "Soundwave",
-                    style = LocalTextStyle.current.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 40.sp
-                    ),
-                    color = colorResource(R.color.purple_500)
-                )
 
-                Image(
-                    painter = painterResource(id = R.drawable.logo), // logo
-                    contentDescription = "logo",
-                    modifier = Modifier.size(160.dp)
-                )
-            }
-            Text(
-                text = "آدرس ایمیل خود را وارد کنید",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Text(
-                text = "ما ایمیلی حاوی دستورالعمل های بازیابی رمز عبور برای شما ارسال خواهیم کرد.",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 32.dp)
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // آیکون بزرگ برای ویژوال بهتر
+            Icon(
+                imageVector = Icons.Outlined.MarkEmailRead,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = navyColor
             )
 
-            // Email Input Field
-            MyBasicTextField(
-                value = email,
-                onValueChange = viewModel::onEmailChange, // Use function reference
-                label = "آدرس ایمیل",
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = KeyboardType.Email
-                ),
-                trailingIcon = Icons.Outlined.Email,
-                modifier = Modifier.fillMaxWidth(),
-                isError = resetStatus is ResetStatus.Error // Show error state if failed
-            )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Loading Indicator or Button
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.height(48.dp)) { // Reserve space
+            Text(
+                text = "فراموشی رمز عبور؟",
+                style = MaterialTheme.typography.headlineMedium,
+                color = navyColor,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "ایمیل خود را وارد کنید تا لینک بازیابی رمز عبور برای شما ارسال شود.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = greyText,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Input
+            MyBasicTextField(
+                value = email,
+                onValueChange = viewModel::onEmailChange,
+                label = "آدرس ایمیل",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                trailingIcon = Icons.Outlined.Email,
+                modifier = Modifier.fillMaxWidth(),
+                isError = resetStatus is ResetStatus.Error
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Action Button
+            Button(
+                onClick = { viewModel.sendPasswordResetEmail() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                enabled = !isLoading && email.isNotBlank(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = orangeColor,
+                    contentColor = Color.White
+                )
+            ) {
                 if (isLoading) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    RoundedButton(
-                        text = "ارسال ایمیل بازیابی",
-                        onClick = { viewModel.sendPasswordResetEmail() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = email.isNotBlank() // Enable button only if email has text
-                    )
+                    Text("ارسال ایمیل بازیابی", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
+            // ✅ تغییر اینجاست: حذف weight(1f) و استفاده از فاصله ثابت
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
             TextButton(
                 onClick = { navController.popBackStack() },
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = colorResource(R.color.purple_500) // رنگ متن و ripple
-                )
+                colors = ButtonDefaults.textButtonColors(contentColor = navyColor)
             ) {
-                Text("بازگشت به ورود")
+                Text("بازگشت به صفحه ورود")
             }
+
         }
     }
 }

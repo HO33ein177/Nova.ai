@@ -28,6 +28,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.bio.AppDestinations
+import com.example.bio.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -55,6 +58,11 @@ fun ConversationListScreen(
     val conversationSummaries by viewModel.conversationSummaries.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
+    // --- تم رنگی ---
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val orangeColor = colorResource(R.color.pro_orange)
+    val backgroundColor = colorResource(R.color.pro_white_smoke)
+
     // Load conversation summaries when the screen is composed or userId changes
     LaunchedEffect(userId) {
         Log.d("ConvListScreen", "Loading conversation summaries for userId: $userId")
@@ -64,10 +72,10 @@ fun ConversationListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Chats") },
+                title = { Text("My Chats", color = Color.White) }, // متن سفید
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = navyColor, // نوار سرمه‌ای
+                    titleContentColor = Color.White
                 )
             )
         },
@@ -80,12 +88,13 @@ fun ConversationListScreen(
                     // Navigate to ChatScreen with the new ID
                     navController.navigate(AppDestinations.createChatRoute(userId, newConversationId))
                 },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = orangeColor, // دکمه نارنجی
+                contentColor = Color.White
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "New Chat")
             }
-        }
+        },
+        containerColor = backgroundColor // پس‌زمینه سفید دودی
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -93,13 +102,13 @@ fun ConversationListScreen(
                 .padding(paddingValues)
         ) {
             if (isLoading && conversationSummaries.isEmpty()) { // Show loader only if summaries are empty
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = orangeColor)
             } else if (conversationSummaries.isEmpty()) {
                 Text(
                     "No conversations yet. Tap the '+' button to start!",
                     modifier = Modifier.align(Alignment.Center).padding(16.dp),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Gray
                 )
             } else {
                 LazyColumn(
@@ -114,7 +123,7 @@ fun ConversationListScreen(
                                 navController.navigate(AppDestinations.createChatRoute(userId, summary.conversationId))
                             }
                         )
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        Divider(color = Color.LightGray.copy(alpha = 0.5f))
                     }
                 }
             }
@@ -127,6 +136,8 @@ fun ConversationListItem(
     summary: ConversationSummary,
     onClick: () -> Unit
 ) {
+    val navyColor = colorResource(R.color.pro_navy_dark)
+
     // Function to format timestamp
     fun formatTimestamp(timestamp: Long): String {
         val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
@@ -145,25 +156,25 @@ fun ConversationListItem(
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = navyColor // تیتر سرمه‌ای
             )
         },
         supportingContent = {
             Text(
                 text = "Last message: ${formatTimestamp(summary.lastMessageTimestamp)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.Gray
             )
         },
         leadingContent = {
             Icon(
                 Icons.Filled.Chat,
                 contentDescription = "Chat Icon",
-                tint = MaterialTheme.colorScheme.primary
+                tint = navyColor // آیکون سرمه‌ای
             )
         },
         colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color.Transparent
         )
     )
 }

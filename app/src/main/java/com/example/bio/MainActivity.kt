@@ -93,6 +93,29 @@ fun AppNavigation() {
             ChangePasswordScreen(navController = navController)
         }
 
+        composable(route = AppDestinations.SUBSCRIPTION_ROUTE) {
+            com.example.bio.presentation.common.component.chat.SubscriptionScreen(navController = navController)
+        }
+
+        composable(
+            route = AppDestinations.PAYMENT_ROUTE,
+            arguments = listOf(
+                navArgument("planTitle") { type = NavType.StringType },
+                navArgument("planPrice") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val planTitle = backStackEntry.arguments?.getString("planTitle") ?: "نامشخص"
+            val planPrice = backStackEntry.arguments?.getString("planPrice") ?: "0"
+
+            // فراخوانی صفحه جدید
+            com.example.bio.presentation.common.component.chat.PaymentScreen(
+                navController = navController,
+                planTitle = planTitle,
+                planPrice = planPrice
+            )
+        }
+
+
         // Conversation List Screen
         composable(
             route = AppDestinations.CONVERSATION_LIST_ROUTE,

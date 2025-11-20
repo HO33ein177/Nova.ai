@@ -1,30 +1,57 @@
 package com.example.bio.presentation.common.component.splash
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import kotlinx.coroutines.delay
-import androidx.compose.foundation.Image
 import com.example.bio.AppDestinations
 import com.example.bio.R
-
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(navController: NavController) {
-    // This effect runs once when the composable enters the composition
+    val scale = remember { Animatable(0.5f) }
+    val alpha = remember { Animatable(0f) }
+
+    val navyColor = colorResource(R.color.pro_navy_dark)
+
+    // ✅✅✅ اصلاح شده: استفاده از LaunchedEffect برای ایجاد CoroutineScope
     LaunchedEffect(key1 = true) {
-        delay(2000L) // Wait for 2 seconds
-        // Navigate to onboarding and remove splash from back stack
+        // این launch ها حالا داخل اسکوپِ LaunchedEffect اجرا می‌شوند و ارور نمی‌دهند
+        launch {
+            scale.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1000)
+            )
+        }
+        launch {
+            alpha.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1000)
+            )
+        }
+
+        delay(2000L) // مکث قبل از رفتن به صفحه بعد
+
         navController.navigate(AppDestinations.ONBOARDING_ROUTE) {
             popUpTo(AppDestinations.SPLASH_ROUTE) { inclusive = true }
         }
@@ -33,25 +60,37 @@ fun SplashScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF3F51B5)),
+            .background(navyColor),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .scale(scale.value)
+                .alpha(alpha.value)
+        ) {
             Image(
-                painter = painterResource(id = R.drawable.onboarding_illustration), // Use your actual filename here!
-
-                contentDescription = "Onboarding Illustration",
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .aspectRatio(1f),
-                contentScale = ContentScale.Fit,
-
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "App Logo",
+                modifier = Modifier.size(150.dp),
+                contentScale = ContentScale.Fit
             )
+
             Spacer(modifier = Modifier.height(24.dp))
+
             Text(
                 text = "Soundwave",
                 color = Color.White,
-                fontSize = 32.sp
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.displayMedium
+            )
+
+            Text(
+                text = "دستیار هوشمند شما",
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
