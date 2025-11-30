@@ -75,6 +75,7 @@ dependencies {
     implementation (libs.accompanist.permissions)
     implementation(libs.common)
     implementation(libs.androidx.navigation.runtime.android)
+    implementation(libs.androidx.animation.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -111,7 +112,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
 
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
-
-
+    implementation("io.coil-kt:coil-compose:2.6.0")
 }

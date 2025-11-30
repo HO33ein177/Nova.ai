@@ -14,6 +14,11 @@ object AppDestinations {
     const val FORGET_PASSWORD_ROUTE = "forget_Password"
     const val SUBSCRIPTION_ROUTE = "subscription"
     const val PAYMENT_ROUTE = "payment/{planTitle}/{planPrice}"
+<<<<<<< Updated upstream
+=======
+    const val PROFILE_ROUTE = "profile/{userId}"
+
+>>>>>>> Stashed changes
     // Conversation List Route
     const val CONVERSATION_LIST_ROUTE_BASE = "conversationList"
     const val CONVERSATION_LIST_ROUTE = "$CONVERSATION_LIST_ROUTE_BASE/{${NavArguments.USER_ID}}"
@@ -42,4 +47,9 @@ object AppDestinations {
     fun createPaymentRoute(planTitle: String, planPrice: String): String {
         return "payment/$planTitle/$planPrice"
     }
+<<<<<<< Updated upstream
+=======
+
+    fun createProfileRoute(userId: Int) = "profile/$userId"
+>>>>>>> Stashed changes
 }

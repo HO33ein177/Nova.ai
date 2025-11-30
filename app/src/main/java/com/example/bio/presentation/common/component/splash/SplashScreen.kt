@@ -70,7 +70,11 @@ fun SplashScreen(navController: NavController) {
                 .alpha(alpha.value)
         ) {
             Image(
+<<<<<<< Updated upstream
                 painter = painterResource(id = R.drawable.logo),
+=======
+                painter = painterResource(id = R.drawable.logo7),
+>>>>>>> Stashed changes
                 contentDescription = "App Logo",
                 modifier = Modifier.size(150.dp),
                 contentScale = ContentScale.Fit
@@ -79,7 +83,7 @@ fun SplashScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Soundwave",
+                text = "Nova AI",
                 color = Color.White,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,

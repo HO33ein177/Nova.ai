@@ -17,11 +17,17 @@
         tools:targetApi="31"
         android:usesCleartextTraffic="true"
         >
+
+
         <activity
             android:name=".MainActivity"
             android:windowSoftInputMode="adjustResize"
+<<<<<<< Updated upstream
+=======
+            android:screenOrientation="portrait"
+>>>>>>> Stashed changes
             android:exported="true"
-            android:theme="@style/Theme.Bio">
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

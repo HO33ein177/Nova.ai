@@ -1,7 +1,10 @@
 package com.example.bio.presentation.common.component.chat
 
 import android.Manifest
+<<<<<<< Updated upstream
 import android.util.Log
+=======
+>>>>>>> Stashed changes
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -14,9 +17,14 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+<<<<<<< Updated upstream
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+=======
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+>>>>>>> Stashed changes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +35,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
@@ -35,11 +44,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+<<<<<<< Updated upstream
 import androidx.compose.ui.draw.shadow
+=======
+>>>>>>> Stashed changes
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+<<<<<<< Updated upstream
+=======
+import androidx.compose.ui.layout.ContentScale
+>>>>>>> Stashed changes
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -55,9 +71,13 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import coil.compose.AsyncImage
 import com.example.bio.AppDestinations
 import com.example.bio.R
 import com.example.bio.presentation.common.component.auth.UserViewModel
@@ -65,13 +85,18 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import java.io.File
 import java.text.SimpleDateFormat
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
+=======
+import java.util.*
+>>>>>>> Stashed changes
 =======
 import java.util.*
 >>>>>>> Stashed changes
@@ -100,10 +125,19 @@ fun ChatScreen(
     val conversationSummaries by conversationListViewModel.conversationSummaries.collectAsStateWithLifecycle()
     val isHistoryLoading by conversationListViewModel.isLoading.collectAsStateWithLifecycle()
 
+<<<<<<< Updated upstream
+=======
+    val userInfo by userViewModel.userInfo.collectAsStateWithLifecycle()
+
+>>>>>>> Stashed changes
     var userInput by remember { mutableStateOf("") }
+    // برای reverseLayout، پوزیشن 0 یعنی پایین‌ترین نقطه لیست
     val listState = rememberLazyListState()
+<<<<<<< Updated upstream
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
+=======
+>>>>>>> Stashed changes
     val recordAudioPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
     var showRationaleDialog by remember { mutableStateOf(false) }
     var isHistoryPageOpen by remember { mutableStateOf(false) }
@@ -112,6 +146,22 @@ fun ChatScreen(
     val orangeColor = colorResource(R.color.pro_orange)
     val backgroundColor = colorResource(R.color.pro_white_smoke)
 
+<<<<<<< Updated upstream
+=======
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                userViewModel.getUserInfo(userId)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+>>>>>>> Stashed changes
     LaunchedEffect(userId, conversationId) {
         chatViewModel.loadDataForConversation(userId, conversationId)
     }
@@ -122,6 +172,7 @@ fun ChatScreen(
         }
     }
 
+<<<<<<< Updated upstream
     LaunchedEffect(chatHistory.size) {
         if (chatHistory.isNotEmpty()) {
             listState.animateScrollToItem(chatHistory.size - 1)
@@ -132,6 +183,13 @@ fun ChatScreen(
     LaunchedEffect(isImeVisible) {
         if (isImeVisible && chatHistory.isNotEmpty()) {
             listState.animateScrollToItem(chatHistory.size - 1)
+=======
+    // ✅ اسکرول فقط زمانی که کاربر پیام جدید داد یا وارد صفحه شد
+    // در حالت Reverse Layout، ایندکس 0 یعنی پایین صفحه. پس همیشه میریم به 0
+    LaunchedEffect(chatHistory.size, isLoading) {
+        if (chatHistory.isNotEmpty() || isLoading) {
+            listState.animateScrollToItem(0)
+>>>>>>> Stashed changes
         }
     }
 
@@ -217,11 +275,13 @@ fun ChatScreen(
                         )
                     )
             ) {
+                // ✅✅✅ کلید حل مشکل: استفاده از reverseLayout = true
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 16.dp),
+<<<<<<< Updated upstream
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
                 ) {
@@ -230,6 +290,23 @@ fun ChatScreen(
                         ChatBubble(message = message)
 =======
                     items(chatHistory, key = { it.id }) { message ->
+=======
+                    reverseLayout = true, // لیست از پایین به بالا چیده می‌شود (استاندارد چت)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
+                ) {
+                    // 1. چون reverseLayout است، اولین آیتم در کد، پایین‌ترین آیتم در صفحه است
+                    // پس حباب لودینگ را اینجا می‌گذاریم
+                    if (isLoading && !isRecording) {
+                        item(key = "loading_bubble") {
+                            LoadingAnswerBubble()
+                        }
+                    }
+
+                    // 2. لیست پیام‌ها را باید برعکس کنیم تا درست نمایش داده شوند
+                    // (چون خود LazyColumn برعکس شده است)
+                    items(chatHistory.reversed(), key = { it.id }) { message ->
+>>>>>>> Stashed changes
                         ChatBubble(
                             message = message,
                             onDelete = { chatViewModel.deleteMessage(message.id) }
@@ -237,8 +314,10 @@ fun ChatScreen(
 >>>>>>> Stashed changes
                     }
 
+                    // 3. لودینگ اولیه (وسط صفحه)
                     if (isLoading && chatHistory.isEmpty()) {
                         item {
+<<<<<<< Updated upstream
                             Box(modifier = Modifier.fillMaxSize().padding(top = 50.dp), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(color = orangeColor)
                             }
@@ -246,6 +325,11 @@ fun ChatScreen(
                     } else if (isLoading && !isRecording) {
                         item {
                             TypingIndicator(navyColor)
+=======
+                            Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = orangeColor)
+                            }
+>>>>>>> Stashed changes
                         }
                     }
                 }
@@ -276,6 +360,10 @@ fun ChatScreen(
                 isHistoryPageOpen = false
             },
             currentUserId = userId,
+<<<<<<< Updated upstream
+=======
+            profilePicturePath = userInfo?.profilePicturePath,
+>>>>>>> Stashed changes
             onLogout = {
                 userViewModel.signOut()
                 navController.navigate(AppDestinations.LOGIN_ROUTE) {
@@ -283,6 +371,12 @@ fun ChatScreen(
                     launchSingleTop = true
                 }
                 Toast.makeText(context, "از حساب خارج شدید", Toast.LENGTH_SHORT).show()
+<<<<<<< Updated upstream
+=======
+            },
+            onProfileClick = {
+                navController.navigate(AppDestinations.createProfileRoute(userId))
+>>>>>>> Stashed changes
             }
         )
 
@@ -316,6 +410,57 @@ fun ChatScreen(
     }
 }
 
+// ✅ حباب لودینگ
+@Composable
+fun LoadingAnswerBubble() {
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val orangeColor = colorResource(R.color.pro_orange)
+    val surfaceColor = colorResource(R.color.pro_surface_light)
+
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        // آیکون ربات
+        Surface(
+            modifier = Modifier.size(32.dp),
+            shape = CircleShape,
+            color = navyColor.copy(alpha = 0.1f),
+            shadowElevation = 0.dp
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Image(
+                    painter = painterResource(id = R.drawable.robo_icon),
+                    contentDescription = "Bot",
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // حباب سفید
+        Surface(
+            shape = RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp),
+            color = surfaceColor,
+            shadowElevation = 2.dp
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = orangeColor,
+                    strokeWidth = 2.dp
+                )
+            }
+        }
+    }
+}
+
+
 @Composable
 fun ChatInputArea(
     userInput: String,
@@ -326,6 +471,7 @@ fun ChatInputArea(
     onRecordStart: () -> Unit,
     onRecordStop: () -> Unit
 ) {
+<<<<<<< Updated upstream
     val interactionSource = remember { MutableInteractionSource() }
     val isMicPressed by interactionSource.collectIsPressedAsState()
     val orangeColor = colorResource(R.color.pro_orange)
@@ -348,6 +494,20 @@ fun ChatInputArea(
             if (isRecording) onRecordStop()
         }
     }
+=======
+    val orangeColor = colorResource(R.color.pro_orange)
+    val navyColor = colorResource(R.color.pro_navy_dark)
+
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isRecording) 1.2f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500),
+            repeatMode = RepeatMode.Reverse
+        ), label = "pulse"
+    )
+>>>>>>> Stashed changes
 
     Surface(
         color = Color.Transparent,
@@ -359,7 +519,10 @@ fun ChatInputArea(
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+<<<<<<< Updated upstream
             // --- دکمه میکروفون ---
+=======
+>>>>>>> Stashed changes
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -374,6 +537,7 @@ fun ChatInputArea(
                     )
                     .clip(CircleShape)
                     .pointerInput(Unit) {
+<<<<<<< Updated upstream
                         detectTapGestures(
                             onPress = {
                                 if (!isLoading) {
@@ -386,6 +550,27 @@ fun ChatInputArea(
                                 }
                             }
                         )
+=======
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed = false)
+
+                            if (!isLoading) {
+                                var isCancelled = false
+                                try {
+                                    onRecordStart()
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        event.changes.forEach { it.consume() }
+                                    } while (event.changes.any { it.pressed })
+
+                                } catch (e: Exception) {
+                                    isCancelled = true
+                                } finally {
+                                    onRecordStop()
+                                }
+                            }
+                        }
+>>>>>>> Stashed changes
                     }
             ) {
                 Icon(
@@ -396,7 +581,10 @@ fun ChatInputArea(
                 )
             }
 
+<<<<<<< Updated upstream
             // --- ورودی متن (هوشمند) ---
+=======
+>>>>>>> Stashed changes
             Surface(
                 modifier = Modifier
                     .weight(1f)
@@ -407,6 +595,11 @@ fun ChatInputArea(
                 border = if (isRecording) BorderStroke(1.dp, orangeColor) else null
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+<<<<<<< Updated upstream
+=======
+                    val isLtr = userInput.isNotEmpty() && (userInput.first().isDigit() || userInput.first() in 'a'..'z' || userInput.first() in 'A'..'Z')
+
+>>>>>>> Stashed changes
                     OutlinedTextField(
                         value = userInput,
                         onValueChange = onUserInputChanged,
@@ -414,10 +607,16 @@ fun ChatInputArea(
                             .fillMaxWidth()
                             .padding(horizontal = 4.dp),
 
+<<<<<<< Updated upstream
                         // ✅✅✅ اصلاح جهت متن: ContentOrLtr
                         // اگر متن فارسی باشد راست‌چین می‌شود، اگر انگلیسی باشد چپ‌چین
                         textStyle = MaterialTheme.typography.bodyLarge.copy(
                             textDirection = androidx.compose.ui.text.style.TextDirection.ContentOrLtr
+=======
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                            textAlign = if (isLtr) TextAlign.Left else TextAlign.Right,
+                            textDirection = if (isLtr) androidx.compose.ui.text.style.TextDirection.Ltr else androidx.compose.ui.text.style.TextDirection.ContentOrRtl
+>>>>>>> Stashed changes
                         ),
 
                         placeholder = {
@@ -427,13 +626,20 @@ fun ChatInputArea(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.fillMaxWidth(),
+<<<<<<< Updated upstream
                                 // ✅ متن پیش‌فرض را همیشه راست‌چین نگه می‌داریم (چون فارسی است)
+=======
+>>>>>>> Stashed changes
                                 textAlign = TextAlign.Right
                             )
                         },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                         keyboardActions = KeyboardActions(onSend = { if (userInput.isNotBlank()) onSendMessage() }),
+<<<<<<< Updated upstream
                         enabled = !isLoading,
+=======
+                        enabled = !isLoading && !isRecording,
+>>>>>>> Stashed changes
                         maxLines = 4,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color.Transparent,
@@ -448,7 +654,10 @@ fun ChatInputArea(
                 }
             }
 
+<<<<<<< Updated upstream
             // --- دکمه ارسال ---
+=======
+>>>>>>> Stashed changes
             val isSendEnabled = userInput.isNotBlank() && !isLoading && !isRecording
             Box(
                 contentAlignment = Alignment.Center,
@@ -465,12 +674,143 @@ fun ChatInputArea(
                     )
             ) {
                 Icon(
+<<<<<<< Updated upstream
                     // اگر آیکون جهت‌دار است، برای زبان فارسی باید Mirrored شود
+=======
+>>>>>>> Stashed changes
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = "Send",
                     tint = if (isSendEnabled) Color.White else navyColor,
                     modifier = Modifier.size(22.dp)
                 )
+<<<<<<< Updated upstream
+=======
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ChatBubble(message: ChatMessage, onDelete: () -> Unit) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
+    val navyColor = colorResource(R.color.pro_navy_dark)
+    val surfaceColor = colorResource(R.color.pro_surface_light)
+
+    val bubbleColor = if (message.isFromUser) navyColor else surfaceColor
+    val textColor = if (message.isFromUser) Color.White else Color.Black
+    val shadowElevation = if (message.isFromUser) 0.dp else 2.dp
+
+    val shape = if (message.isFromUser) {
+        RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
+    } else {
+        RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp)
+    }
+
+    val alignment = if (message.isFromUser) Alignment.CenterEnd else Alignment.CenterStart
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Column(modifier = Modifier.align(alignment)) {
+            Row(
+                verticalAlignment = Alignment.Bottom
+            ) {
+                if (!message.isFromUser) {
+                    Surface(
+                        modifier = Modifier.size(32.dp),
+                        shape = CircleShape,
+                        color = navyColor.copy(alpha = 0.1f),
+                        shadowElevation = 0.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Image(
+                                painter = painterResource(id = R.drawable.robo_icon),
+                                contentDescription = "Bot",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
+                if (message.isFromUser && !message.isError) {
+                    Box {
+                        IconButton(
+                            onClick = { menuExpanded = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "Options",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text("کپی") },
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(message.text))
+                                    Toast.makeText(context, "کپی شد", Toast.LENGTH_SHORT).show()
+                                    menuExpanded = false
+                                },
+                                leadingIcon = { Icon(Icons.Default.ContentCopy, null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("حذف", color = Color.Red) },
+                                onClick = {
+                                    onDelete()
+                                    menuExpanded = false
+                                },
+                                leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+
+                Surface(
+                    shape = shape,
+                    color = bubbleColor,
+                    shadowElevation = shadowElevation,
+                    modifier = Modifier.widthIn(max = 280.dp)
+                ) {
+                    Text(
+                        text = message.text,
+                        color = textColor,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 24.sp),
+                        textAlign = if (message.text.any { it in '\u0600'..'\u06FF' }) TextAlign.Right else TextAlign.Left
+                    )
+                }
+
+                if (!message.isFromUser && !message.isError) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.MoreVert, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                        }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(text = { Text("کپی") }, onClick = {
+                                clipboardManager.setText(AnnotatedString(message.text))
+                                Toast.makeText(context, "کپی شد", Toast.LENGTH_SHORT).show()
+                                menuExpanded = false
+                            }, leadingIcon = { Icon(Icons.Default.ContentCopy, null) })
+
+                            DropdownMenuItem(text = { Text("حذف", color = Color.Red) }, onClick = {
+                                onDelete()
+                                menuExpanded = false
+                            }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) })
+                        }
+                    }
+                }
+>>>>>>> Stashed changes
             }
         }
     }
@@ -480,25 +820,41 @@ fun ChatInputArea(
 <<<<<<< Updated upstream
 fun InitialPrompts(onPromptClick: (String) -> Unit) {
     val prompts = listOf(
-        "Explain quantum physics",
-        "Explain black holes simply",
-        "Write a tweet about global warming",
-        "Write a poem about love and roses",
+        "تفسیر آزمایش خون",
+        "توصیه های سلامتی برای دیابت",
+        "برنامه غذایی سالم",
+        "اطلاعات دارویی"
     )
+    val navyColor = colorResource(R.color.pro_navy_dark)
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            "Try asking:",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 16.dp),
-            textAlign = TextAlign.Center
+        Icon(
+            painter = painterResource(id = R.drawable.robo_icon),
+            contentDescription = null,
+            modifier = Modifier
+                .size(100.dp)
+                .padding(bottom = 24.dp),
+            tint = navyColor.copy(alpha = 0.2f)
         )
+
+        Text(
+            "چطور می‌توانم کمکتان کنم؟",
+            style = MaterialTheme.typography.headlineSmall,
+            color = navyColor,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
         prompts.forEach { prompt ->
-            SuggestionChip(
+            Card(
                 onClick = { onPromptClick(prompt) },
+<<<<<<< Updated upstream
                 label = { Text(prompt, textAlign = TextAlign.Center) },
                 modifier = Modifier.padding(vertical = 4.dp).fillMaxWidth(0.9f)
             )
@@ -669,6 +1025,38 @@ fun ChatBubble(message: ChatMessage, onDelete: () -> Unit) {
                                 menuExpanded = false
                             }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) })
                         }
+=======
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AutoAwesome,
+                            contentDescription = null,
+                            tint = navyColor.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Text(
+                            text = prompt,
+                            color = navyColor,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Right
+                        )
+>>>>>>> Stashed changes
                     }
                 }
             }
@@ -779,7 +1167,13 @@ fun HistoryPage(
     onHistoryItemSelected: (String) -> Unit,
     onNewChatClicked: (String) -> Unit,
     currentUserId: Int,
+<<<<<<< Updated upstream
     onLogout: () -> Unit
+=======
+    profilePicturePath: String?,
+    onLogout: () -> Unit,
+    onProfileClick: () -> Unit
+>>>>>>> Stashed changes
 ) {
     val navyColor = colorResource(R.color.pro_navy_dark)
     val orangeColor = colorResource(R.color.pro_orange)
@@ -866,6 +1260,7 @@ fun HistoryPage(
                     Divider(color = Color.LightGray)
                     // Footer
                     Row(
+<<<<<<< Updated upstream
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -875,6 +1270,37 @@ fun HistoryPage(
                             }
                         }
                         Spacer(Modifier.width(12.dp))
+=======
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .clickable {
+                                onProfileClick()
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = navyColor.copy(alpha = 0.1f),
+                            modifier = Modifier.size(50.dp),
+                            border = BorderStroke(1.dp, navyColor.copy(alpha = 0.2f))
+                        ) {
+                            if (profilePicturePath != null) {
+                                AsyncImage(
+                                    model = File(profilePicturePath),
+                                    contentDescription = "Profile",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("U", color = navyColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.width(12.dp))
+
+>>>>>>> Stashed changes
                         Column {
                             Text("کاربر", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                             Text("$currentUserId", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
@@ -889,6 +1315,16 @@ fun HistoryPage(
                                 tint = Color.Red.copy(alpha = 0.7f)
                             )
                         }
+<<<<<<< Updated upstream
+=======
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = Color.Gray,
+                            modifier = Modifier.size(16.dp)
+                        )
+>>>>>>> Stashed changes
                     }
                 }
             }
@@ -952,17 +1388,27 @@ fun RecordingOverlay() {
     Box(
         modifier = Modifier
             .fillMaxSize()
+<<<<<<< Updated upstream
             .background(Color.Black.copy(alpha = 0.7f))
             .clickable(enabled = false) {},
         contentAlignment = Alignment.Center
     ) {
         // استفاده از Column برای چیدن آیکون و متن زیر هم
+=======
+            .background(Color.Black.copy(alpha = 0.4f))
+            .clickable(enabled = false) {},
+        contentAlignment = Alignment.Center
+    ) {
+>>>>>>> Stashed changes
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Box(contentAlignment = Alignment.Center) {
+<<<<<<< Updated upstream
                 // دایره پالس
+=======
+>>>>>>> Stashed changes
                 Box(
                     modifier = Modifier
                         .size(120.dp)
@@ -974,7 +1420,10 @@ fun RecordingOverlay() {
                         .background(orangeColor, CircleShape)
                 )
 
+<<<<<<< Updated upstream
                 // آیکون ثابت
+=======
+>>>>>>> Stashed changes
                 Surface(
                     modifier = Modifier.size(80.dp),
                     shape = CircleShape,
@@ -992,15 +1441,24 @@ fun RecordingOverlay() {
                 }
             }
 
+<<<<<<< Updated upstream
             Spacer(modifier = Modifier.height(18.dp))
+=======
+            Spacer(modifier = Modifier.height(24.dp))
+>>>>>>> Stashed changes
 
             Text(
                 text = "...در حال ضبط",
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+<<<<<<< Updated upstream
                 textAlign = TextAlign.Center, // ✅ متن را داخل کادر وسط‌چین می‌کند
                 modifier = Modifier.fillMaxWidth() // ✅ عرض کامل می‌گیرد تا وسط‌چین دقیق باشد
+=======
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+>>>>>>> Stashed changes
             )
         }
     }

@@ -17,5 +17,6 @@ data class User(
     val email: String,
     val password: String, // Keep this field, but store "" or null after signup
     val name: String? = null, // Make name nullable if it's optional
-    val firebaseUid: String? = null // <<< ADD THIS FIELD (make nullable initially)
+    val firebaseUid: String? = null, // <<< ADD THIS FIELD (make nullable initially)
+    val profilePicturePath: String? = null
 )

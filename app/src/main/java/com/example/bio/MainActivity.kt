@@ -28,6 +28,7 @@ import com.example.bio.presentation.common.component.quiz.PdfListScreen
 import com.example.bio.presentation.common.component.quiz.QuizScreen
 import com.example.bio.presentation.common.component.splash.SplashScreen
 import com.example.bio.presentation.common.component.theme.BioTheme
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.UUID
 
@@ -36,6 +37,7 @@ private const val TAG = "AppNavigation" // For logging
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -127,6 +129,18 @@ fun AppNavigation() {
             } else {
                 Text("Error: Missing User ID for Conversation List.")
             }
+        }
+
+        composable(
+            route = AppDestinations.PROFILE_ROUTE,
+            arguments = listOf(navArgument("userId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getInt("userId") ?: 0
+            // اینجا باید صفحه را ایمپورت کنید
+            com.example.bio.presentation.common.component.profile.ProfileScreen(
+                navController = navController,
+                userId = userId
+            )
         }
 
         // Chat Screen

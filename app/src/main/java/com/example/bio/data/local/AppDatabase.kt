@@ -17,7 +17,7 @@ import com.example.bio.data.local.entity.UserPreferences
     ApiToken::class,
     Message::class
 ],
-    version = 2)
+    version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun userPreferencesDao(): UserPreferenceDao
